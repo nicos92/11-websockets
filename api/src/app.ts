@@ -19,12 +19,25 @@ async function main() {
 
     ws.on('message', function message(data) {
       console.log('received: %s', data);
-      // TODO: enviar la data otra vez al cliente
-      const payload = {
+      const payload = JSON.stringify({
         type: 'custom-message',
         payload: data.toString()
-      }
-      ws.send(JSON.stringify(payload))
+      })
+      // ws.send(JSON.stringify(payload))
+      //* todos -incluyente
+      // wss.clients.forEach(function each(client) {
+      //   if (client.readyState === WebSocket.OPEN) {
+      //     client.send(payload, { binary: false });
+      //   }
+      // });
+
+      //* Todos expcluyente
+      wss.clients.forEach(function each(client) {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(payload, { binary: false });
+        }
+      });
+
     });
 
     ws.send('Hola desde el servidor');

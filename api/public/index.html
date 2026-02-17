@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSockets</title>
+</head>
+
+<body>
+    <h1>WebSockets - Status: <span id="status"></span></h1>
+    <form action="">
+        <div>
+            <label for="enviarMensaje"></label>
+            <input id="enviarMensaje" type="text" placeholder="Enviar Mensaje...">
+        </div>
+        <button type="submit">Enviar</button>
+    </form>
+
+    <ul id="messages">
+
+    </ul>
+
+    <script>
+        let socket = null
+        let reconnectionDelay = 1000;
+        const maxDelay = 30000;
+        let attempts = 0;
+        const maxAttempts = 10;
+        console.log("Ejecutando front")
+        const form = document.querySelector('form')
+        const imput = document.getElementById('enviarMensaje')
+        const messagesElement = document.getElementById('messages')
+        const statusElem = document.getElementById('status')
+
+        function sendMessage(message) {
+            socket?.send(message)
+        }
+
+        function renderMessage(message) {
+            const li = document.createElement('li')
+            li.innerHTML = message
+            messagesElement.prepend(li)
+            imput.value = null
+        }
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault()
+            const message = imput.value
+            sendMessage(message)
+
+        })
+        function connectToServer() {
+            socket = new WebSocket('ws://localhost');
+
+            socket.onopen = (event) => {
+                reconnectionDelay = 1000; // Reinicia
+                attempts = 0; // Reinicia también el contador
+                statusElem.innerText = '✅';
+            };
+
+            socket.onclose = (event) => {
+                statusElem.innerText = '❌';
+                if (attempts < maxAttempts) {
+                    attempts++;
+                    const delay = Math.min(reconnectionDelay * 2, maxDelay);
+                    const jitter = Math.random() * 1000;
+                    setTimeout(() => {
+                        connectToServer();
+                    }, delay + jitter);
+                    reconnectionDelay = delay; // Actualiza para la próxima
+                }
+            };
+
+            socket.onmessage = (event) => {
+                const { payload } = JSON.parse(event.data);
+                renderMessage(payload);
+            };
+        }
+        connectToServer()
+
+    </script>
+</body>
+
+</html>

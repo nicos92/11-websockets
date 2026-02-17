@@ -19,6 +19,12 @@ async function main() {
 
     ws.on('message', function message(data) {
       console.log('received: %s', data);
+      // TODO: enviar la data otra vez al cliente
+      const payload = {
+        type: 'custom-message',
+        payload: data.toString()
+      }
+      ws.send(JSON.stringify(payload))
     });
 
     ws.send('Hola desde el servidor');
